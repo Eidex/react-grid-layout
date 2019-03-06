@@ -259,69 +259,6 @@ export default class ResponsiveReactGridLayout extends React.Component<
     });
   };
 
-  // /**
-  //  * When the width changes work through breakpoints and reset state with the new width & breakpoint.
-  //  * Width changes are necessary to figure out the widget widths.
-  //  */
-  // onWidthChange(nextProps: Props<*>) {
-  //   const { breakpoints, cols, layouts, compactType } = nextProps;
-  //   const newBreakpoint =
-  //     nextProps.breakpoint ||
-  //     getBreakpointFromWidth(nextProps.breakpoints, nextProps.width);
-
-  //   const lastBreakpoint = this.state.breakpoint;
-  //   const newCols: number = getColsFromBreakpoint(newBreakpoint, cols);
-
-  //   // Breakpoint change
-  //   if (
-  //     lastBreakpoint !== newBreakpoint ||
-  //     this.props.breakpoints !== breakpoints ||
-  //     this.props.cols !== cols
-  //   ) {
-  //     // Preserve the current layout if the current breakpoint is not present in the next layouts.
-  //     if (!(lastBreakpoint in layouts))
-  //       layouts[lastBreakpoint] = cloneLayout(this.state.layout);
-
-  //     // Find or generate a new layout.
-  //     let layout = findOrGenerateResponsiveLayout(
-  //       layouts,
-  //       breakpoints,
-  //       newBreakpoint,
-  //       lastBreakpoint,
-  //       newCols,
-  //       compactType
-  //     );
-
-  //     // This adds missing items.
-  //     layout = synchronizeLayoutWithChildren(
-  //       layout,
-  //       nextProps.children,
-  //       newCols,
-  //       compactType
-  //     );
-
-  //     // Store the new layout.
-  //     layouts[newBreakpoint] = layout;
-
-  //     // callbacks
-  //     this.props.onLayoutChange(layout, layouts);
-  //     this.props.onBreakpointChange(newBreakpoint, newCols);
-
-  //     this.setState({
-  //       breakpoint: newBreakpoint,
-  //       layout: layout,
-  //       cols: newCols,
-  //     });
-  //   }
-  //   //call onWidthChange on every change of width, not only on breakpoint changes
-  //   this.props.onWidthChange(
-  //     nextProps.width,
-  //     nextProps.margin,
-  //     newCols,
-  //     nextProps.containerPadding
-  //   );
-  // }
-
   render() {
     /* eslint-disable no-unused-vars */
     const {
