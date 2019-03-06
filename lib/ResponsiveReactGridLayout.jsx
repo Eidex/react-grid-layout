@@ -23,7 +23,8 @@ const type = obj => Object.prototype.toString.call(obj);
 type State = {
   layout: Layout,
   breakpoint: string,
-  cols: number
+  cols: number,
+  prevProps: any
 };
 
 type Props<Breakpoint: string = string> = {
@@ -138,22 +139,97 @@ export default class ResponsiveReactGridLayout extends React.Component<
     return {
       layout: initialLayout,
       breakpoint: breakpoint,
-      cols: colNo
+      cols: colNo,
+      prevProps: { ...this.props }
     };
   }
 
-  componentWillReceiveProps(nextProps: Props<*>) {
+  static getDerivedStateFromProps(nextProps: Props<*>, prevState: State) {
     // Allow parent to set width or breakpoint directly.
     if (
-      nextProps.width != this.props.width ||
-      nextProps.breakpoint !== this.props.breakpoint ||
-      !isEqual(nextProps.breakpoints, this.props.breakpoints) ||
-      !isEqual(nextProps.cols, this.props.cols)
+      nextProps.width != prevState.prevProps.width ||
+      nextProps.breakpoint !== prevState.prevProps.breakpoint ||
+      !isEqual(nextProps.breakpoints, prevState.prevProps.breakpoints) ||
+      !isEqual(nextProps.cols, prevState.prevProps.cols)
     ) {
-      this.onWidthChange(nextProps);
-    } else if (!isEqual(nextProps.layouts, this.props.layouts)) {
+      /**
+       * When the width changes work through breakpoints and reset state with the new width & breakpoint.
+       * Width changes are necessary to figure out the widget widths.
+       */
+      const { breakpoints, cols, layouts, compactType } = nextProps;
+      const newBreakpoint =
+        nextProps.breakpoint ||
+        getBreakpointFromWidth(nextProps.breakpoints, nextProps.width);
+
+      const lastBreakpoint = prevState.breakpoint;
+      const newCols: number = getColsFromBreakpoint(newBreakpoint, cols);
+      let setFlag = false;
+      let layout;
+      // Breakpoint change
+      if (
+        lastBreakpoint !== newBreakpoint ||
+        prevState.prevProps.breakpoints !== breakpoints ||
+        prevState.prevProps.cols !== cols
+      ) {
+        // Preserve the current layout if the current breakpoint is not present in the next layouts.
+        if (!(lastBreakpoint in layouts))
+          layouts[lastBreakpoint] = cloneLayout(prevState.prevProps.layout);
+
+        // Find or generate a new layout.
+        layout = findOrGenerateResponsiveLayout(
+          layouts,
+          breakpoints,
+          newBreakpoint,
+          lastBreakpoint,
+          newCols,
+          compactType
+        );
+
+        // This adds missing items.
+        layout = synchronizeLayoutWithChildren(
+          layout,
+          nextProps.children,
+          newCols,
+          compactType
+        );
+
+        // Store the new layout.
+        layouts[newBreakpoint] = layout;
+
+        // callbacks
+        prevState.prevProps.onLayoutChange(layout, layouts);
+        prevState.prevProps.onBreakpointChange(newBreakpoint, newCols);
+
+        //this.setState({
+        setFlag = true;
+        // return {
+        //   breakpoint: newBreakpoint,
+        //   layout: layout,
+        //   cols: newCols,
+        //   prevProps: {...nextProps}
+        // };
+        //});
+      }
+      //call onWidthChange on every change of width, not only on breakpoint changes
+      prevState.prevProps.onWidthChange(
+        nextProps.width,
+        nextProps.margin,
+        newCols,
+        nextProps.containerPadding
+      );
+
+      // work around so onWidthChange will still be called
+      if (setFlag) {
+        return {
+          breakpoint: newBreakpoint,
+          layout: layout,
+          cols: newCols,
+          prevProps: { ...nextProps }
+        };
+      }
+    } else if (!isEqual(nextProps.layouts, prevState.prevProps.layouts)) {
       // Allow parent to set layouts directly.
-      const { breakpoint, cols } = this.state;
+      const { breakpoint, cols } = prevState;
 
       // Since we're setting an entirely new layout object, we must generate a new responsive layout
       // if one does not exist.
@@ -165,8 +241,14 @@ export default class ResponsiveReactGridLayout extends React.Component<
         cols,
         nextProps.compactType
       );
-      this.setState({ layout: newLayout });
+
+      return {
+        layout: newLayout,
+        prevProps: { ...nextProps }
+      };
+      //this.setState({ layout: newLayout, prevProps: {...nextProps} });
     }
+    return null;
   }
 
   // wrap layouts so we do not need to pass layouts to child
@@ -177,68 +259,68 @@ export default class ResponsiveReactGridLayout extends React.Component<
     });
   };
 
-  /**
-   * When the width changes work through breakpoints and reset state with the new width & breakpoint.
-   * Width changes are necessary to figure out the widget widths.
-   */
-  onWidthChange(nextProps: Props<*>) {
-    const { breakpoints, cols, layouts, compactType } = nextProps;
-    const newBreakpoint =
-      nextProps.breakpoint ||
-      getBreakpointFromWidth(nextProps.breakpoints, nextProps.width);
+  // /**
+  //  * When the width changes work through breakpoints and reset state with the new width & breakpoint.
+  //  * Width changes are necessary to figure out the widget widths.
+  //  */
+  // onWidthChange(nextProps: Props<*>) {
+  //   const { breakpoints, cols, layouts, compactType } = nextProps;
+  //   const newBreakpoint =
+  //     nextProps.breakpoint ||
+  //     getBreakpointFromWidth(nextProps.breakpoints, nextProps.width);
 
-    const lastBreakpoint = this.state.breakpoint;
-    const newCols: number = getColsFromBreakpoint(newBreakpoint, cols);
+  //   const lastBreakpoint = this.state.breakpoint;
+  //   const newCols: number = getColsFromBreakpoint(newBreakpoint, cols);
 
-    // Breakpoint change
-    if (
-      lastBreakpoint !== newBreakpoint ||
-      this.props.breakpoints !== breakpoints ||
-      this.props.cols !== cols
-    ) {
-      // Preserve the current layout if the current breakpoint is not present in the next layouts.
-      if (!(lastBreakpoint in layouts))
-        layouts[lastBreakpoint] = cloneLayout(this.state.layout);
+  //   // Breakpoint change
+  //   if (
+  //     lastBreakpoint !== newBreakpoint ||
+  //     this.props.breakpoints !== breakpoints ||
+  //     this.props.cols !== cols
+  //   ) {
+  //     // Preserve the current layout if the current breakpoint is not present in the next layouts.
+  //     if (!(lastBreakpoint in layouts))
+  //       layouts[lastBreakpoint] = cloneLayout(this.state.layout);
 
-      // Find or generate a new layout.
-      let layout = findOrGenerateResponsiveLayout(
-        layouts,
-        breakpoints,
-        newBreakpoint,
-        lastBreakpoint,
-        newCols,
-        compactType
-      );
+  //     // Find or generate a new layout.
+  //     let layout = findOrGenerateResponsiveLayout(
+  //       layouts,
+  //       breakpoints,
+  //       newBreakpoint,
+  //       lastBreakpoint,
+  //       newCols,
+  //       compactType
+  //     );
 
-      // This adds missing items.
-      layout = synchronizeLayoutWithChildren(
-        layout,
-        nextProps.children,
-        newCols,
-        compactType
-      );
+  //     // This adds missing items.
+  //     layout = synchronizeLayoutWithChildren(
+  //       layout,
+  //       nextProps.children,
+  //       newCols,
+  //       compactType
+  //     );
 
-      // Store the new layout.
-      layouts[newBreakpoint] = layout;
+  //     // Store the new layout.
+  //     layouts[newBreakpoint] = layout;
 
-      // callbacks
-      this.props.onLayoutChange(layout, layouts);
-      this.props.onBreakpointChange(newBreakpoint, newCols);
+  //     // callbacks
+  //     this.props.onLayoutChange(layout, layouts);
+  //     this.props.onBreakpointChange(newBreakpoint, newCols);
 
-      this.setState({
-        breakpoint: newBreakpoint,
-        layout: layout,
-        cols: newCols
-      });
-    }
-    //call onWidthChange on every change of width, not only on breakpoint changes
-    this.props.onWidthChange(
-      nextProps.width,
-      nextProps.margin,
-      newCols,
-      nextProps.containerPadding
-    );
-  }
+  //     this.setState({
+  //       breakpoint: newBreakpoint,
+  //       layout: layout,
+  //       cols: newCols,
+  //     });
+  //   }
+  //   //call onWidthChange on every change of width, not only on breakpoint changes
+  //   this.props.onWidthChange(
+  //     nextProps.width,
+  //     nextProps.margin,
+  //     newCols,
+  //     nextProps.containerPadding
+  //   );
+  // }
 
   render() {
     /* eslint-disable no-unused-vars */

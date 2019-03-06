@@ -14,9 +14,10 @@ import {
   synchronizeLayoutWithChildren,
   validateLayout,
   getAllCollisions,
-  noop
+  noop,
+  createDragApiRef
 } from "./utils";
-import GridItem from "./GridItem";
+import GridItem, { calcXY } from "./GridItem";
 import type {
   ChildrenArray as ReactChildrenArray,
   Element as ReactElement
@@ -29,7 +30,8 @@ import type {
   GridResizeEvent,
   GridDragEvent,
   Layout,
-  LayoutItem
+  LayoutItem,
+  DragApiRefObject
 } from "./utils";
 
 type State = {
@@ -38,7 +40,8 @@ type State = {
   mounted: boolean,
   oldDragItem: ?LayoutItem,
   oldLayout: ?Layout,
-  oldResizeItem: ?LayoutItem
+  oldResizeItem: ?LayoutItem,
+  prevProps: any
 };
 
 export type Props = {
@@ -60,6 +63,7 @@ export type Props = {
   isResizable: boolean,
   preventCollision: boolean,
   useCSSTransforms: boolean,
+  dragApiRef: DragApiRefObject,
 
   // Callbacks
   onLayoutChange: Layout => void,
@@ -217,6 +221,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     verticalCompact: true,
     compactType: "vertical",
     preventCollision: false,
+    dragApiRef: createDragApiRef(),
     onLayoutChange: noop,
     onDragStart: noop,
     onDrag: noop,
@@ -238,7 +243,8 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     mounted: false,
     oldDragItem: null,
     oldLayout: null,
-    oldResizeItem: null
+    oldResizeItem: null,
+    prevProps: { ...this.props }
   };
 
   constructor(props: Props, context: any): void {
@@ -254,27 +260,99 @@ export default class ReactGridLayout extends React.Component<Props, State> {
   }
 
   componentDidMount() {
+    let dragInfo = null;
+
+    this.props.dragApiRef.value = {
+      dragIn: ({ i, w, h, node, event, position }) => {
+        dragInfo = { i, w, h, node };
+        const { layout } = this.state;
+        const { margin, containerPadding } = this.props;
+        const { x, y } = calcXY(position.top, position.left, {
+          containerWidth: this.props.width,
+          cols: this.props.cols,
+          margin,
+          containerPadding: containerPadding || margin,
+          rowHeight: this.props.rowHeight,
+          maxRows: this.props.maxRows,
+          w,
+          h
+        });
+        if (!this.state.activeDrag) {
+          const l = { i, w, h, x, y };
+          this.setState({
+            oldDragItem: l,
+            oldLayout: layout,
+            layout: [...this.state.layout, l],
+            activeDrag: l
+          });
+          this.props.onDragStart(layout, l, l, null, event, node);
+        } else {
+          this.onDrag(i, x, y, { e: event, node, newPosition: position });
+        }
+      },
+
+      dragOut: () => {
+        if (dragInfo) {
+          const { i } = dragInfo;
+          this.setState((state, props) => ({
+            layout: compact(
+              state.layout.filter(d => d.i !== i),
+              this.compactType(),
+              props.cols
+            ),
+            activeDrag: null
+          }));
+        }
+      },
+
+      stop: ({ event, position }) => {
+        if (dragInfo) {
+          const { i, w, h, node } = dragInfo;
+          const { margin, containerPadding } = this.props;
+          const { x, y } = calcXY(position.top, position.left, {
+            containerWidth: this.props.width,
+            cols: this.props.cols,
+            margin,
+            containerPadding: containerPadding || margin,
+            rowHeight: this.props.rowHeight,
+            maxRows: this.props.maxRows,
+            w,
+            h
+          });
+          this.onDragStop(i, x, y, { e: event, node, newPosition: position });
+          dragInfo = null;
+        }
+      }
+    };
+
     this.setState({ mounted: true });
     // Possibly call back with layout on mount. This should be done after correcting the layout width
     // to ensure we don't rerender with the wrong width.
     this.onLayoutMaybeChanged(this.state.layout, this.props.layout);
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  static getDerivedStateFromProps(nextProps: Props, prevState: State) {
     let newLayoutBase;
     // Legacy support for compactType
     // Allow parent to set layout directly.
     if (
-      !isEqual(nextProps.layout, this.props.layout) ||
-      nextProps.compactType !== this.props.compactType
+      !isEqual(nextProps.layout, prevState.prevProps.layout) ||
+      nextProps.compactType !== prevState.prevProps.compactType
     ) {
       newLayoutBase = nextProps.layout;
-    } else if (!childrenEqual(this.props.children, nextProps.children)) {
+    } else if (
+      !childrenEqual(prevState.prevProps.children, nextProps.children)
+    ) {
       // If children change, also regenerate the layout. Use our state
       // as the base in case because it may be more up to date than
       // what is in props.
-      newLayoutBase = this.state.layout;
+      newLayoutBase = prevState.layout;
     }
+
+    const _compactT = (props: ?Object): CompactType => {
+      if (!props) props = prevState.prevProps;
+      return props.verticalCompact === false ? null : props.compactType;
+    };
 
     // We need to regenerate the layout.
     if (newLayoutBase) {
@@ -282,12 +360,23 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         newLayoutBase,
         nextProps.children,
         nextProps.cols,
-        this.compactType(nextProps)
+        _compactT(nextProps)
       );
-      const oldLayout = this.state.layout;
-      this.setState({ layout: newLayout });
-      this.onLayoutMaybeChanged(newLayout, oldLayout);
+      let oldLayout = prevState.layout;
+      //this.setState({ layout: newLayout, prevProps: { ...nextProps } });
+      //this.onLayoutMaybeChanged(newLayout, oldLayout);
+      if (!oldLayout) oldLayout = prevState.layout;
+      if (!isEqual(oldLayout, newLayout)) {
+        prevState.prevProps.onLayoutChange(newLayout);
+      }
+
+      return {
+        layout: newLayout,
+        prevProps: { ...nextProps }
+      };
     }
+
+    return null;
   }
 
   /**
@@ -433,6 +522,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
   onResizeStart(i: string, w: number, h: number, { e, node }: GridResizeEvent) {
     const { layout } = this.state;
     var l = getLayoutItem(layout, i);
+    //const placeholder = this.state.activeDrag;
     if (!l) return;
 
     this.setState({
