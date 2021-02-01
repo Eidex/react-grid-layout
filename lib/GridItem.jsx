@@ -40,6 +40,7 @@ type Props = {
   isResizable: boolean,
   static?: boolean,
   useCSSTransforms?: boolean,
+  overridePosition?: boolean,
   usePercentages?: boolean,
 
   className: string,
@@ -190,6 +191,9 @@ export default class GridItem extends React.Component<Props, State> {
     // Use CSS transforms instead of top/left
     useCSSTransforms: PropTypes.bool.isRequired,
 
+    // Do not apply any positional styling
+    overridePosition: PropTypes.bool.isRequired,
+
     // Others
     className: PropTypes.string,
     // Selector for draggable handle
@@ -301,11 +305,21 @@ export default class GridItem extends React.Component<Props, State> {
    * @return {Object}     Style object.
    */
   createStyle(pos: Position): { [key: string]: ?string } {
-    const { usePercentages, containerWidth, useCSSTransforms } = this.props;
+    const {
+      usePercentages,
+      containerWidth,
+      useCSSTransforms,
+      overridePosition
+    } = this.props;
 
     let style;
-    // CSS Transforms support (default)
-    if (useCSSTransforms) {
+
+    // Do not include any position styling
+    if (overridePosition) {
+      style = {};
+
+      // CSS Transforms support (default)
+    } else if (useCSSTransforms) {
       style = setTransform(pos);
     } else {
       // top,left (slow)
