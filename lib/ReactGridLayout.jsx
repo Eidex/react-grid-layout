@@ -63,7 +63,6 @@ export type Props = {
   isResizable: boolean,
   preventCollision: boolean,
   useCSSTransforms: boolean,
-  overridePosition: boolean,
   dragApiRef: DragApiRefObject,
 
   // Callbacks
@@ -160,9 +159,6 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     // Use CSS transforms instead of top/left
     useCSSTransforms: PropTypes.bool,
 
-    // Do not apply any positional styling
-    overridePosition: PropTypes.bool,
-
     //
     // Callbacks
     //
@@ -222,7 +218,6 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     isDraggable: true,
     isResizable: true,
     useCSSTransforms: true,
-    overridePosition: false,
     verticalCompact: true,
     compactType: "vertical",
     preventCollision: false,
@@ -627,8 +622,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
       containerPadding,
       rowHeight,
       maxRows,
-      useCSSTransforms,
-      overridePosition
+      useCSSTransforms
     } = this.props;
 
     // {...this.state.activeDrag} is pretty slow, actually
@@ -649,7 +643,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         isDraggable={false}
         isResizable={false}
         useCSSTransforms={useCSSTransforms}
-        overridePosition={overridePosition}
+        overridePosition={!!activeDrag.overridePosition}
       >
         <div />
       </GridItem>
@@ -675,7 +669,6 @@ export default class ReactGridLayout extends React.Component<Props, State> {
       isDraggable,
       isResizable,
       useCSSTransforms,
-      overridePosition,
       draggableCancel,
       draggableHandle
     } = this.props;
@@ -708,7 +701,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         isDraggable={draggable}
         isResizable={resizable}
         useCSSTransforms={useCSSTransforms && mounted}
-        overridePosition={overridePosition}
+        overridePosition={!!l.overridePosition}
         usePercentages={!mounted}
         w={l.w}
         h={l.h}

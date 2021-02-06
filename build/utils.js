@@ -23,7 +23,6 @@ exports.moveElement = moveElement;
 exports.moveElementAwayFromCollision = moveElementAwayFromCollision;
 exports.perc = perc;
 exports.setTransform = setTransform;
-exports.setSizeOnly = setSizeOnly;
 exports.setTopLeft = setTopLeft;
 exports.sortLayoutItems = sortLayoutItems;
 exports.sortLayoutItemsByRowCol = sortLayoutItemsByRowCol;
@@ -82,6 +81,7 @@ function cloneLayoutItem(layoutItem) {
     maxW: layoutItem.maxW,
     minH: layoutItem.minH,
     maxH: layoutItem.maxH,
+    overridePosition: layoutItem.overridePosition,
     moved: Boolean(layoutItem.moved),
     static: Boolean(layoutItem.static),
     // These can be null
@@ -461,23 +461,11 @@ function setTransform(_ref) {
   };
 }
 
-function setSizeOnly(_ref2) {
+function setTopLeft(_ref2) {
   var top = _ref2.top,
       left = _ref2.left,
       width = _ref2.width,
       height = _ref2.height;
-
-  return {
-    width: width + "px",
-    height: height + "px"
-  };
-}
-
-function setTopLeft(_ref3) {
-  var top = _ref3.top,
-      left = _ref3.left,
-      width = _ref3.width,
-      height = _ref3.height;
 
   return {
     top: top + "px",
@@ -558,7 +546,8 @@ function synchronizeLayoutWithChildren(initialLayout, children, cols, compactTyp
           h: 1,
           x: 0,
           y: bottom(layout),
-          i: String(child.key)
+          i: String(child.key),
+          overridePosition: !!child.overridePosition
         });
       }
     }

@@ -196,7 +196,7 @@ var GridItem = function (_React$Component) {
 
     // Do not include any position styling
     if (overridePosition) {
-      style = (0, _utils.setSizeOnly)(pos);
+      style = {};
 
       // CSS Transforms support (default)
     } else if (useCSSTransforms) {

@@ -3,7 +3,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { DraggableCore } from "react-draggable";
 import { Resizable } from "react-resizable";
-import { perc, setTopLeft, setTransform, setSizeOnly } from "./utils";
+import { perc, setTopLeft, setTransform } from "./utils";
 import classNames from "classnames";
 import type { Element as ReactElement, Node as ReactNode } from "react";
 
@@ -316,7 +316,7 @@ export default class GridItem extends React.Component<Props, State> {
 
     // Do not include any position styling
     if (overridePosition) {
-      style = setSizeOnly(pos);
+      style = {};
 
       // CSS Transforms support (default)
     } else if (useCSSTransforms) {

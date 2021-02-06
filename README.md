@@ -297,9 +297,6 @@ isResizable: ?boolean = true,
 // This makes about 6x faster paint performance
 useCSSTransforms: ?boolean = true,
 
-// No positional styling will be applied and you must provide it yourself
-overridePosition: ?boolean = false,
-
 // If true, grid items won't change position when being
 // dragged over.
 preventCollision: ?boolean = false;
@@ -400,6 +397,8 @@ will be draggable.
   maxW: ?number = Infinity,
   minH: ?number = 0,
   maxH: ?number = Infinity,
+  // when true, no positional styling will be applied and you must provide it yourself
+  overridePosition: ?boolean = false,
 
   // If true, equal to `isDraggable: false, isResizable: false`.
   static: ?boolean = false,

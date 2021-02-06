@@ -453,8 +453,7 @@ var ReactGridLayout = function (_React$Component) {
         containerPadding = _props5.containerPadding,
         rowHeight = _props5.rowHeight,
         maxRows = _props5.maxRows,
-        useCSSTransforms = _props5.useCSSTransforms,
-        overridePosition = _props5.overridePosition;
+        useCSSTransforms = _props5.useCSSTransforms;
 
     // {...this.state.activeDrag} is pretty slow, actually
 
@@ -476,7 +475,7 @@ var ReactGridLayout = function (_React$Component) {
         isDraggable: false,
         isResizable: false,
         useCSSTransforms: useCSSTransforms,
-        overridePosition: overridePosition
+        overridePosition: !!activeDrag.overridePosition
       },
       _react2.default.createElement("div", null)
     );
@@ -503,7 +502,6 @@ var ReactGridLayout = function (_React$Component) {
         isDraggable = _props6.isDraggable,
         isResizable = _props6.isResizable,
         useCSSTransforms = _props6.useCSSTransforms,
-        overridePosition = _props6.overridePosition,
         draggableCancel = _props6.draggableCancel,
         draggableHandle = _props6.draggableHandle;
     var mounted = this.state.mounted;
@@ -533,7 +531,7 @@ var ReactGridLayout = function (_React$Component) {
         isDraggable: draggable,
         isResizable: resizable,
         useCSSTransforms: useCSSTransforms && mounted,
-        overridePosition: overridePosition,
+        overridePosition: !!l.overridePosition,
         usePercentages: !mounted,
         w: l.w,
         h: l.h,
@@ -646,9 +644,6 @@ ReactGridLayout.propTypes = {
   // Use CSS transforms instead of top/left
   useCSSTransforms: _propTypes2.default.bool,
 
-  // Do not apply any positional styling
-  overridePosition: _propTypes2.default.bool,
-
   //
   // Callbacks
   //
@@ -703,7 +698,6 @@ ReactGridLayout.defaultProps = {
   isDraggable: true,
   isResizable: true,
   useCSSTransforms: true,
-  overridePosition: false,
   verticalCompact: true,
   compactType: "vertical",
   preventCollision: false,
