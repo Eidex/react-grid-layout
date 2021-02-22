@@ -643,6 +643,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         isDraggable={false}
         isResizable={false}
         useCSSTransforms={useCSSTransforms}
+        overridePosition={!!activeDrag.overridePosition}
       >
         <div />
       </GridItem>
@@ -700,6 +701,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         isDraggable={draggable}
         isResizable={resizable}
         useCSSTransforms={useCSSTransforms && mounted}
+        overridePosition={!!l.overridePosition}
         usePercentages={!mounted}
         w={l.w}
         h={l.h}

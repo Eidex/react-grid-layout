@@ -23,6 +23,7 @@ RGL is React-only and does not require jQuery.
 - [Demos](#demos)
 - [Features](#features)
 - [Installation](#installation)
+- [Building](#building)
 - [Usage](#usage)
 - [Responsive Usage](#responsive-usage)
 - [Providing Grid Width](#providing-grid-width)
@@ -103,6 +104,9 @@ Include the following stylesheets in your application:
 /node_modules/react-grid-layout/css/styles.css
 /node_modules/react-resizable/css/styles.css
 ```
+## Building
+- Run `npm run build` from VSC
+- During commit, include the flag `--no-verify` after the commit message
 
 ## Usage
 
@@ -393,6 +397,8 @@ will be draggable.
   maxW: ?number = Infinity,
   minH: ?number = 0,
   maxH: ?number = Infinity,
+  // when true, no positional styling will be applied and you must provide it yourself
+  overridePosition: ?boolean = false,
 
   // If true, equal to `isDraggable: false, isResizable: false`.
   static: ?boolean = false,
