@@ -538,7 +538,7 @@ function synchronizeLayoutWithChildren(initialLayout, children, cols, compactTyp
         if (!isProduction) {
           validateLayout([g], "ReactGridLayout.children");
         }
-        layout[i] = cloneLayoutItem(_extends({}, g, { i: child.key }));
+        layout[i] = cloneLayoutItem(_extends({}, g, { i: child.key, overridePosition: !!child.overridePosition }));
       } else {
         // Nothing provided: ensure this is added to the bottom
         layout[i] = cloneLayoutItem({

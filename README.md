@@ -264,11 +264,12 @@ draggableCancel: ?string = '',
 // If you forget the leading . it will not work.
 draggableHandle: ?string = '',
 
-// If true, the layout will compact vertically
-verticalCompact: ?boolean = true,
+// This is now depreciated
+~~// If true, the layout will compact vertically~~
+~~verticalCompact: ?boolean = true,~~
 
-// Compaction type.
-compactType: ?('vertical' | 'horizontal') = 'vertical';
+// Compaction type. null gives a non-compact grid
+compactType: ?('vertical' | 'horizontal' | null) = 'vertical';
 
 // Layout is an array of object with the format:
 // {x: number, y: number, w: number, h: number}
@@ -397,7 +398,8 @@ will be draggable.
   maxW: ?number = Infinity,
   minH: ?number = 0,
   maxH: ?number = Infinity,
-  // when true, no positional styling will be applied and you must provide it yourself
+
+  // If true, no positional styling will be applied and you must provide it yourself
   overridePosition: ?boolean = false,
 
   // If true, equal to `isDraggable: false, isResizable: false`.
