@@ -266,7 +266,7 @@ draggableHandle: ?string = '',
 
 // !! This is now depreciated !!
 // If true, the layout will compact vertically
-//verticalCompact: ?boolean = true,
+// verticalCompact: ?boolean = true,
 
 // Compaction type. null gives a non-compact grid
 compactType: ?('vertical' | 'horizontal' | null) = 'vertical';
